@@ -1,19 +1,21 @@
-import os
 import random
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
+from environs import Env
 
-from dotenv import load_dotenv, find_dotenv
+env = Env()
+env.read_env()
+bot_token = env('TOKEN')
 
-load_dotenv(find_dotenv())
-
-bot = Bot(token=os.getenv('TOKEN'))
+bot = Bot(bot_token)
 dp = Dispatcher()
 ATTEMPTS = 7
 
 users = {}
+
+
 # user = {'in_game': False,
 #         'secret_number': None,
 #         'attempts': None,
