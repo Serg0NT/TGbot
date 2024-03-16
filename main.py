@@ -3,11 +3,17 @@ import random
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
-from environs import Env
+from config_data.config import load_config
 
-env = Env()
-env.read_env()
-bot_token = env('TOKEN')
+config = load_config('.env')
+
+bot_token = config.tg_bot.token
+superadmin = config.tg_bot.admin_ids[0]
+
+
+# env = Env()
+# env.read_env()
+# bot_token = env('TOKEN')
 
 bot = Bot(bot_token)
 dp = Dispatcher()
