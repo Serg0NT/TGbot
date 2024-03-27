@@ -40,7 +40,7 @@ async def process_positive_answer(message: Message):
     if not users[message.from_user.id]['in_game']:
         users[message.from_user.id]['in_game'] = True
         users[message.from_user.id]['secret_word'] = get_random_word()
-        users[message.from_user.id]['user_word'] = '*****'
+        users[message.from_user.id]['user_word'] = ['*', '*', '*', '*', '*']
         users[message.from_user.id]['attempts'] = ATTEMPTS
         await message.answer(
             'Ура!\n\nЯ загадал слово из 5 букв, '
@@ -73,7 +73,9 @@ async def process_negative_answer(message: Message):
 @router.message(lambda x: x.text and x.text.isalpha() and len(x.text) == 5)
 async def process_numbers_answer(message: Message):
     if users[message.from_user.id]['in_game']:
-        if message.text.lower() == users[message.from_user.id]['secret_word']:
+        print(1, message.text)
+        print(1, users[message.from_user.id]['secret_word'])
+        if message.text.lower() == users[message.from_user.id]['secret_word'] and users[message.from_user.id]['attempts'] > 0:
             users[message.from_user.id]['in_game'] = False
             users[message.from_user.id]['total_games'] += 1
             users[message.from_user.id]['wins'] += 1
@@ -82,7 +84,7 @@ async def process_numbers_answer(message: Message):
                 'Может, сыграем еще?'
             )
 
-        if users[message.from_user.id]['attempts'] == 0:
+        elif users[message.from_user.id]['attempts'] == 0:
             users[message.from_user.id]['in_game'] = False
             users[message.from_user.id]['total_games'] += 1
             await message.answer(
@@ -91,18 +93,20 @@ async def process_numbers_answer(message: Message):
                 f'было {users[message.from_user.id]["secret_word"]}\n\nДавайте '
                 f'сыграем еще?'
             )
+
         else:
             users[message.from_user.id]['attempts'] -= 1
             ind = -1
             for let in message.text.lower():
                 ind += 1
+                # Если буква из слова пользователя угадана позиционно, делаем ее большой
                 if let == users[message.from_user.id]["secret_word"][ind]:
-                    print(let)
                     users[message.from_user.id]["user_word"][ind] = let.upper()
+                # Если буква есть в слове, но в другой позиции - просто добавляем в слово
                 elif let in users[message.from_user.id]["secret_word"]:
                     users[message.from_user.id]["user_word"][ind] = let.lower()
             await message.answer(
-                f'{users[message.from_user.id]["user_word"]}\n'
+                f'{"".join(users[message.from_user.id]["user_word"])}\n'
                 f'У вас осталось {users[message.from_user.id]["attempts"]} попыток')
     else:
         await message.answer('Мы еще не играем. Хотите сыграть?')

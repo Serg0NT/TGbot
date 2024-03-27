@@ -8,7 +8,6 @@ from game.game_words import users
 router = Router()
 
 
-
 # Этот хэндлер срабатывает на команду /start
 @router.message(CommandStart())
 async def process_start_command(message: Message):
@@ -20,7 +19,7 @@ async def process_start_command(message: Message):
         users[message.from_user.id] = {
             'in_game': False,
             'secret_word': None,
-            'user_word': '*****',
+            'user_word': ['*', '*', '*', '*', '*'],
             'attempts': None,
             'total_games': 0,
             'wins': 0

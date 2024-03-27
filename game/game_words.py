@@ -17,5 +17,5 @@ def get_random_word() -> str:
 
 
 # users[1] = get_random_word()
-print(get_random_word())
+# print(get_random_word())
 # print(users[1]['secret_word'])
