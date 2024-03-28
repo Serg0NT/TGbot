@@ -1,10 +1,35 @@
 from aiogram import Router, F
-from aiogram.types import Message
+from aiogram.types import (KeyboardButton, Message, ReplyKeyboardMarkup,
+                           ReplyKeyboardRemove)
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram.filters import Command
-from lexicon.lexicon import LEXICON_RU
 from game.game_words import users, ATTEMPTS, get_random_word
 
 router = Router()
+
+# kb_builder = ReplyKeyboardBuilder()
+
+btn_start = KeyboardButton(text='/start')
+btn_help = KeyboardButton(text='/help')
+btn_cancel = KeyboardButton(text='/cancel')
+btn_stat = KeyboardButton(text='/stat')
+btn_play = KeyboardButton(text='Играть')
+btn_no = KeyboardButton(text='Нет')
+
+# buttons_1 = [btn_help, btn_cancel, btn_stat, btn_start]
+#
+# kb_builder.row(*buttons_1)
+
+keyboard = ReplyKeyboardMarkup(keyboard=[[btn_play, btn_no], [btn_stat, btn_help]],
+                               resize_keyboard=True,
+                               one_time_keyboard=True)
+keyboard_cancel = ReplyKeyboardMarkup(keyboard=[[btn_cancel]],
+                                      resize_keyboard=True,
+                                      one_time_keyboard=True)
+keyboard_in_game = ReplyKeyboardMarkup(keyboard=[[btn_cancel], [btn_stat, btn_help]],
+                                       resize_keyboard=True,
+                                       one_time_keyboard=True)
+
 
 
 # Этот хэндлер будет срабатывать на команду "/stat"
@@ -13,23 +38,26 @@ async def process_stat_command(message: Message):
     await message.answer(
         f'Всего игр сыграно: '
         f'{users[message.from_user.id]["total_games"]}\n'
-        f'Игр выиграно: {users[message.from_user.id]["wins"]}'
+        f'Игр выиграно: {users[message.from_user.id]["wins"]}',
+        reply_markup=keyboard
     )
 
 
 # Этот хэндлер будет срабатывать на команду "/cancel"
 @router.message(Command(commands='cancel'))
-async def process_cancel_comand(message: Message):
+async def process_cancel_command(message: Message):
     if users[message.from_user.id]['in_game']:
         users[message.from_user.id]['in_game'] = False
         await message.answer(
             'Вы вышли из игры. Если захотите сыграть '
-            'снова - напишите об этом'
+            'снова - напишите об этом',
+            reply_markup=keyboard
         )
     else:
         await message.answer(
             'А мы и так с вами не играем. '
-            'Может, сыграем разок?'
+            'Может, сыграем разок?',
+            reply_markup=keyboard
         )
 
 
@@ -44,13 +72,15 @@ async def process_positive_answer(message: Message):
         users[message.from_user.id]['attempts'] = ATTEMPTS
         await message.answer(
             'Ура!\n\nЯ загадал слово из 5 букв, '
-            'попробуй угадать!'
+            'попробуй угадать!',
+            reply_markup=keyboard_in_game
         )
     else:
         await message.answer(
             'Пока мы играем в игру я могу '
             'реагировать только на слова из 5 букв'
-            'и команды /cancel и /stat'
+            'и команды /cancel и /stat',
+            reply_markup=keyboard_in_game
         )
 
 
@@ -60,12 +90,14 @@ async def process_negative_answer(message: Message):
     if not users[message.from_user.id]['in_game']:
         await message.answer(
             'Жаль :(\n\nЕсли захотите поиграть - просто '
-            'напишите об этом'
+            'напишите об этом',
+            reply_markup=keyboard
         )
     else:
         await message.answer(
             'Мы же сейчас с вами играем. Присылайте, '
-            'пожалуйста, слова из 5 букв'
+            'пожалуйста, слова из 5 букв',
+            reply_markup=keyboard
         )
 
 
@@ -75,13 +107,15 @@ async def process_numbers_answer(message: Message):
     if users[message.from_user.id]['in_game']:
         print(1, message.text)
         print(1, users[message.from_user.id]['secret_word'])
-        if message.text.lower() == users[message.from_user.id]['secret_word'] and users[message.from_user.id]['attempts'] > 0:
+        if message.text.lower() == users[message.from_user.id]['secret_word'] and users[message.from_user.id][
+            'attempts'] > 0:
             users[message.from_user.id]['in_game'] = False
             users[message.from_user.id]['total_games'] += 1
             users[message.from_user.id]['wins'] += 1
             await message.answer(
                 'Ура!!! Вы угадали слово!\n\n'
-                'Может, сыграем еще?'
+                'Может, сыграем еще?',
+                reply_markup=keyboard
             )
 
         elif users[message.from_user.id]['attempts'] == 0:
@@ -91,7 +125,8 @@ async def process_numbers_answer(message: Message):
                 f'К сожалению, у вас больше не осталось '
                 f'попыток. Вы проиграли :(\n\nМое слово '
                 f'было {users[message.from_user.id]["secret_word"]}\n\nДавайте '
-                f'сыграем еще?'
+                f'сыграем еще?',
+                reply_markup=keyboard
             )
 
         else:
@@ -107,9 +142,12 @@ async def process_numbers_answer(message: Message):
                     users[message.from_user.id]["user_word"][ind] = let.lower()
             await message.answer(
                 f'{"".join(users[message.from_user.id]["user_word"])}\n'
-                f'У вас осталось {users[message.from_user.id]["attempts"]} попыток')
+                f'У вас осталось {users[message.from_user.id]["attempts"]} попыток',
+                reply_markup=keyboard_in_game
+            )
     else:
-        await message.answer('Мы еще не играем. Хотите сыграть?')
+        await message.answer('Мы еще не играем. Хотите сыграть?',
+                             reply_markup=keyboard)
 
 
 # Этот хэндлер будет срабатывать на остальные любые сообщения
@@ -118,10 +156,12 @@ async def process_other_answer(message: Message):
     if users[message.from_user.id]['in_game']:
         await message.answer(
             'Мы же сейчас с вами играем. '
-            'Присылайте, пожалуйста, слова из 5 букв'
+            'Присылайте, пожалуйста, слова из 5 букв',
+            reply_markup=keyboard
         )
     else:
         await message.answer(
             'Я довольно ограниченный бот, давайте '
-            'просто сыграем в игру?'
+            'просто сыграем в игру?',
+            reply_markup=keyboard
         )
